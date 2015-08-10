@@ -997,8 +997,19 @@
 						}).call(this, dataIndex);
 
 					new Chart.MultiTooltip({
-						x: medianPosition.x,
-						y: medianPosition.y,
+						//HURDLR CHANGE
+						//We want to use the actual x an y coordinates rahter than any medi
+						//x: medianPosition.x,
+						//y: medianPosition.y,
+						x: ChartElements[0].x,
+						y: ChartElements[0].y,
+						//HURDLR CHANGE
+						//We keep the indicies so we can access our data when we create the tooltips
+						pointIndex: ChartElements[0].pointIndex,
+						datasetIndex: ChartElements[0].datasetIndex,
+						//HURDLR CHANGE
+						//I want the actual chartElement for bar graphs
+						origChartElement: ChartElements[0],
 						xPadding: this.options.tooltipXPadding,
 						yPadding: this.options.tooltipYPadding,
 						xOffset: this.options.tooltipXOffset,
@@ -1038,7 +1049,11 @@
 							cornerRadius: this.options.tooltipCornerRadius,
 							text: template(this.options.tooltipTemplate, Element),
 							chart: this.chart,
-							custom: this.options.customTooltips
+							custom: this.options.customTooltips,
+							//HURDLR CHANGE
+							//We keep the indicies so we can access our data when we create the tooltips
+							pointIndex: ChartElements[0].pointIndex,
+							datasetIndex: ChartElements[0].datasetIndex
 						}).draw();
 					}, this);
 				}
@@ -1266,7 +1281,14 @@
 
 			// It'd be nice to keep this class totally generic to any rectangle
 			// and simply specify which border to miss out.
-			ctx.moveTo(leftX, this.base);
+			//HURDLR CHANGE: we get this feature, at least for the bottom
+			if(this.drawBottom) {
+				if(top > this.base) { top = this.base; }
+				ctx.moveTo(rightX+halfStroke, this.base);
+				ctx.lineTo(leftX, this.base);
+			} else {
+				ctx.moveTo(leftX, this.base);
+			}
 			ctx.lineTo(leftX, top);
 			ctx.lineTo(rightX, top);
 			ctx.lineTo(rightX, this.base);
@@ -1387,17 +1409,25 @@
 			var halfHeight = this.height/2;
 
 			//Check to ensure the height will fit on the canvas
-			if (this.y - halfHeight < 0 ){
-				this.y = halfHeight;
-			} else if (this.y + halfHeight > this.chart.height){
-				this.y = this.chart.height - halfHeight;
+			//HURDLR CHANGE
+			//We'll take care of modifying the y coordinate of the tooltip ourselves
+			if (false) {
+				if (this.y - halfHeight < 0 ){
+					this.y = halfHeight;
+				} else if (this.y + halfHeight > this.chart.height){
+					this.y = this.chart.height - halfHeight;
+				}
 			}
 
 			//Decide whether to align left or right based on position on canvas
-			if (this.x > this.chart.width/2){
-				this.x -= this.xOffset + this.width;
-			} else {
-				this.x += this.xOffset;
+			//HURDLR CHANGE
+			//We'll take care of modifying the x coordinate of the tooltip ourselves
+			if (false) {
+				if (this.x > this.chart.width/2){
+					this.x -= this.xOffset + this.width;
+				} else {
+					this.x += this.xOffset;
+				}
 			}
 
 
@@ -2068,7 +2098,9 @@
 	Chart.Type.extend({
 		name: "Bar",
 		defaults : defaultConfig,
-		initialize:  function(data){
+		//HURDLR CHANGE
+		//Include a draw bottom boolean argument
+		initialize:  function(data, drawBottom){
 
 			//Expose options as a scope variable here so we can access it in the ScaleClass
 			var options = this.options;
@@ -2154,7 +2186,8 @@
 				helpers.extend(bar, {
 					width : this.scale.calculateBarWidth(this.datasets.length),
 					x: this.scale.calculateBarX(this.datasets.length, datasetIndex, index),
-					y: this.scale.endPoint
+					y: this.scale.endPoint,
+					drawBottom: drawBottom
 				});
 				bar.save();
 			}, this);
@@ -2598,7 +2631,9 @@
 			}
 
 			//Iterate through each of the datasets, and build this into a property of the chart
-			helpers.each(data.datasets,function(dataset){
+			//HURDLR CHANGE
+			//added datasetIndex
+			helpers.each(data.datasets,function(dataset, datasetIndex){
 
 				var datasetObject = {
 					label : dataset.label || null,
@@ -2621,7 +2656,11 @@
 						strokeColor : dataset.pointStrokeColor,
 						fillColor : dataset.pointColor,
 						highlightFill : dataset.pointHighlightFill || dataset.pointColor,
-						highlightStroke : dataset.pointHighlightStroke || dataset.pointStrokeColor
+						highlightStroke : dataset.pointHighlightStroke || dataset.pointStrokeColor,
+						//HURDLR CHANGE
+						//We include index so we can access our data object when creating the tooltip
+						pointIndex: index,
+						datasetIndex: datasetIndex
 					}));
 				},this);
 
